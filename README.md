@@ -4,6 +4,14 @@ A complete, production-ready NestJS backend template with all essential componen
 
 ## Features
 
+### 🔐 Authentication & Authorization
+- JWT authentication (Access + Refresh tokens)
+- User registration and login
+- Role-based access control (SUPER_ADMIN, ADMIN, USER, GUEST)
+- Password hashing with bcrypt
+- Token refresh mechanism
+- Protected routes with guards
+
 ### 🔒 Security
 - Helmet for security headers
 - CORS configuration
@@ -19,7 +27,8 @@ A complete, production-ready NestJS backend template with all essential componen
 
 ### 🛠️ Developer Experience
 - API versioning (URI-based)
-- Swagger/OpenAPI with Scalar UI
+- OpenAPI/Swagger with Scalar UI
+- Automatic API documentation
 - Health check endpoint
 - Request tracing with unique IDs
 - Structured logging
@@ -83,6 +92,44 @@ npm run start:dev
 - Documentation: http://localhost:3000/api-docs
 - Health Check: http://localhost:3000/api/health
 
+### Default Admin User
+
+The application automatically creates a default admin user on first start.
+
+#### Default Credentials (if not configured):
+```
+Email: admin@admin.com
+Password: admin
+Role: SUPER_ADMIN
+```
+
+#### Customize Admin User (Recommended for Production):
+Add these variables to your `.env` file:
+```env
+ADMIN_EMAIL=your-admin@company.com
+ADMIN_PASSWORD=YourSecurePassword123!
+ADMIN_FIRST_NAME=John
+ADMIN_LAST_NAME=Doe
+```
+
+⚠️ **IMPORTANT**: Use custom credentials in production!
+
+```bash
+# Login with default credentials
+POST /api/v1/auth/login
+{
+  "email": "admin@admin.com",
+  "password": "admin"
+}
+
+# Then update the user with secure credentials
+PATCH /api/v1/users/{admin-id}
+{
+  "email": "your-secure-email@company.com",
+  "password": "YourSecurePassword123!"
+}
+```
+
 ### Stopping the Application
 
 To stop the application:
@@ -100,22 +147,34 @@ docker-compose down -v
 
 ```
 src/
-├── common/              # Shared components
-│   ├── constants/       # App constants
-│   ├── decorators/      # Custom decorators
-│   ├── dto/            # Base DTOs
-│   ├── entities/       # Base entity
-│   ├── enums/          # Common enums
-│   ├── exceptions/     # Custom exceptions
-│   └── interfaces/     # Common interfaces
-├── database/           # Database configuration
-├── filters/            # Exception filters
-├── guards/             # Auth guards
-├── health/             # Health check module
-├── interceptors/       # Response/logging interceptors
-├── middlewares/        # Custom middlewares
-├── redis/              # Redis module
-└── utils/              # Utility functions
+├── auth/               # Authentication module
+│   ├── dto/           # Auth DTOs (login, register, refresh)
+│   ├── strategies/    # Passport strategies (JWT)
+│   ├── auth.controller.ts
+│   ├── auth.service.ts
+│   └── auth.module.ts
+├── users/              # User management module
+│   ├── dto/           # User DTOs
+│   ├── entities/      # User entity
+│   ├── users.controller.ts
+│   ├── users.service.ts
+│   └── users.module.ts
+├── common/             # Shared components
+│   ├── constants/     # App constants
+│   ├── decorators/    # Custom decorators (@CurrentUser, @Public, @Roles)
+│   ├── dto/          # Base DTOs
+│   ├── entities/     # Base entity (UUID, timestamps, soft delete)
+│   ├── enums/        # Common enums (Role, etc.)
+│   ├── exceptions/   # Custom exceptions
+│   └── interfaces/   # Common interfaces
+├── database/          # Database configuration
+├── filters/           # Exception filters
+├── guards/            # Auth guards (JwtAuthGuard, RolesGuard)
+├── health/            # Health check module
+├── interceptors/      # Response/logging interceptors
+├── middlewares/       # Custom middlewares
+├── redis/             # Redis module
+└── utils/             # Utility functions
 ```
 
 ## Available Scripts
@@ -151,6 +210,16 @@ npm run lint                 # Lint code
 npm run format               # Format code
 ```
 
+## Documentation
+
+Complete project documentation is available in `.cursor/docs/`:
+
+- **[Documentation Index](.cursor/docs/README.md)** - Full documentation index
+- **[Adding New Roles](.cursor/docs/guides/adding-new-roles.md)** - How to add new roles
+- **[Role Hierarchy](.cursor/docs/features/role-hierarchy.md)** - Role permissions system
+- **[Authentication System](.cursor/docs/features/authentication-system.md)** - JWT auth guide
+- **[Backend Template](.cursor/docs/features/backend-template-complete.md)** - Complete template structure
+
 ## Creating a New Module
 
 For a complete example of how to create a CRUD module with all best practices, see the documentation in `.cursor/docs/features/backend-template-complete.md`.
@@ -180,21 +249,90 @@ src/your-module/
 
 See `.env.example` for all available variables:
 
+### Database
 - `POSTGRES_HOST` - PostgreSQL host (default: localhost)
 - `POSTGRES_PORT` - PostgreSQL port (default: 5432)
 - `POSTGRES_USER` - PostgreSQL user (default: postgres)
 - `POSTGRES_PASSWORD` - PostgreSQL password (default: postgres)
 - `POSTGRES_DB` - PostgreSQL database name (default: nest_proptech)
+
+### Redis
 - `REDIS_HOST` - Redis host (default: localhost)
 - `REDIS_PORT` - Redis port (default: 6379)
+
+### Application
 - `PORT` - Application port (default: 3000)
 - `NODE_ENV` - Environment (development/production)
-- `CORS_ORIGIN` - CORS allowed origins (default: *)
-- `JWT_SECRET` - JWT secret (for auth, to be implemented)
+- `CORS_ORIGIN` - CORS allowed origins (default: *). Examples:
+  - `*` - All origins
+  - `http://localhost:3000,http://localhost:4200` - Multiple specific origins
+
+### Authentication
+- `JWT_SECRET` - JWT access token secret (**REQUIRED - change in production**)
+- `JWT_REFRESH_SECRET` - JWT refresh token secret (**REQUIRED - change in production**)
+- `JWT_EXPIRES_IN` - Access token expiration (default: 15m)
+
+### Admin User Seeder (Optional)
+- `ADMIN_EMAIL` - Admin user email (default: admin@admin.com)
+- `ADMIN_PASSWORD` - Admin user password (default: admin)
+- `ADMIN_FIRST_NAME` - Admin first name (default: Admin)
+- `ADMIN_LAST_NAME` - Admin last name (default: User)
 
 ## API Documentation
 
-Interactive API documentation is available at `/api-docs` powered by Scalar.
+Interactive API documentation is available at `/api-docs` powered by Scalar with automatic OpenAPI/Swagger generation.
+
+### Available Endpoints
+
+#### Authentication (Public)
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login with email/password
+- `POST /api/v1/auth/logout` - Logout (requires JWT)
+- `POST /api/v1/auth/refresh` - Refresh access token
+
+#### Users (Protected)
+- `GET /api/v1/users` - Get all users with pagination (Admin only)
+- `GET /api/v1/users/:id` - Get user by ID
+- `POST /api/v1/users` - Create user (Admin only)
+- `PATCH /api/v1/users/:id` - Update user
+- `DELETE /api/v1/users/:id` - Soft delete user (Admin only)
+
+#### Health
+- `GET /api/v1/health` - Health check endpoint
+
+### Authentication Flow
+
+1. **Register**: `POST /api/v1/auth/register`
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
+
+2. **Login**: `POST /api/v1/auth/login`
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+3. **Use Access Token**: Add to Authorization header
+```
+Authorization: Bearer {accessToken}
+```
+
+4. **Refresh Token**: When access token expires
+```json
+{
+  "refreshToken": "{refreshToken}"
+}
+```
+
+### Response Format
 
 All responses follow a standard format:
 

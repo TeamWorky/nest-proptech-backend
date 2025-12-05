@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression = require('compression');
 import { apiReference } from '@scalar/nestjs-api-reference';
@@ -10,12 +11,23 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
   app.use(compression());
 
+  const corsOrigin = configService.get<string>('CORS_ORIGIN') || '*';
+  const allowedOrigins =
+    corsOrigin === '*' ? '*' : corsOrigin.split(',').map((origin) => origin.trim());
+
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN') || '*',
+    origin: allowedOrigins,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
   });
 
   app.setGlobalPrefix('api');
@@ -36,21 +48,64 @@ async function bootstrap() {
     }),
   );
 
+  // Generate OpenAPI specification dynamically
+  const config = new DocumentBuilder()
+    .setTitle('NestJS Proptech API')
+    .setDescription('Complete backend template with authentication, multi-tenancy, and subscription management')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addServer('http://localhost:3000', 'Development')
+    .addServer('https://api.production.com', 'Production')
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Users', 'User management endpoints')
+    .addTag('Health', 'Health check endpoints')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+
+  // Serve OpenAPI JSON
+  app.use('/api/openapi.json', (req, res) => {
+    res.json(document);
+  });
+
+  // Scalar API Documentation UI
   app.use(
     '/api-docs',
     apiReference({
-      theme: 'default',
-      url: '/openapi.json',
+      theme: 'purple',
+      url: '/api/openapi.json',
+      darkMode: true,
+      layout: 'modern',
+      showSidebar: true,
+      hideModels: false,
+      hideDownloadButton: false,
+      defaultHttpClient: {
+        targetKey: 'js',
+        clientKey: 'fetch',
+      },
+      searchHotKey: 'k',
     }),
   );
 
   app.enableShutdownHooks();
 
   const port = configService.get<number>('PORT') || 3000;
+  const logger = new Logger('Bootstrap');
+
   await app.listen(port);
 
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`API Documentation: http://localhost:${port}/api-docs`);
-  console.log(`Health Check: http://localhost:${port}/api/health`);
+  logger.log(`Application is running on: http://localhost:${port}`);
+  logger.log(`API Documentation available at: http://localhost:${port}/api-docs`);
+  logger.log(`Health Check available at: http://localhost:${port}/api/health`);
 }
 bootstrap();
