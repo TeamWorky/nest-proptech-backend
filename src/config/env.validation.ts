@@ -53,9 +53,15 @@ export const envValidationSchema = Joi.object({
   CORS_ORIGIN: Joi.string().default('*'),
 
   // Logging configuration
+  // Console level: controls what appears in console (default: info)
   LOG_LEVEL: Joi.string()
     .valid('error', 'warn', 'info', 'debug', 'verbose')
     .default('info'),
+  // Minimum level to save in database (default: warn to capture errors and warnings)
+  // Set to 'error' for only errors, 'warn' for errors+warnings, 'info' for all important logs
+  LOG_DB_LEVEL: Joi.string()
+    .valid('error', 'warn', 'info', 'debug', 'verbose')
+    .default('warn'),
   LOG_BATCH_SIZE: Joi.number().default(10),
   LOG_BATCH_TIMEOUT: Joi.number().default(5000),
   LOG_RETENTION_DAYS: Joi.number().default(30),

@@ -11,6 +11,7 @@ export const createWinstonConfig = (
 ) => {
   const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
   const logLevel = configService.get<string>('LOG_LEVEL') || 'info';
+  const dbLogLevel = configService.get<string>('LOG_DB_LEVEL') || 'error';
 
   const transports: winston.transport[] = [];
 
@@ -42,26 +43,28 @@ export const createWinstonConfig = (
   }
 
   // Database transport if provided
+  // Capture from configured DB level (default: error) to ensure all errors are saved
   if (databaseTransport) {
     transports.push(
       new winston.transports.Stream({
         stream: databaseTransport,
         format: winston.format.json(),
+        level: dbLogLevel, // Capture from this level up (error, warn, info, etc.)
       }),
     );
   }
 
   return {
-    level: logLevel,
+    level: logLevel, // Console level (can be filtered)
     format: winston.format.combine(
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
       winston.format.json(),
     ),
     transports,
-    // Handle uncaught exceptions
+    // Handle uncaught exceptions - always log to database
     exceptionHandlers: transports,
-    // Handle unhandled promise rejections
+    // Handle unhandled promise rejections - always log to database
     rejectionHandlers: transports,
   };
 };

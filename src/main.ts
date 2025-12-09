@@ -104,6 +104,29 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
 
+  // Global error handler for uncaught exceptions
+  process.on('uncaughtException', (error: Error) => {
+    loggerService.error(
+      'Uncaught Exception',
+      error.stack,
+      'Bootstrap',
+      { error: error.message, name: error.name },
+    );
+    process.exit(1);
+  });
+
+  // Global error handler for unhandled promise rejections
+  process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+    const errorMessage = reason instanceof Error ? reason.message : String(reason);
+    const errorStack = reason instanceof Error ? reason.stack : undefined;
+    loggerService.error(
+      'Unhandled Promise Rejection',
+      errorStack,
+      'Bootstrap',
+      { reason: errorMessage, promise: String(promise) },
+    );
+  });
+
   const port = configService.get<number>('PORT') || 3000;
 
   await app.listen(port);
