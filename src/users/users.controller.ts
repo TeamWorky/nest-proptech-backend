@@ -51,7 +51,10 @@ export class UsersController {
   @Get()
   @Version('1')
   @MinRole(Role.ADMIN)
-  @ApiOperation({ summary: 'Get all users with pagination (Admin+)' })
+  @ApiOperation({ 
+    summary: 'Get all users with pagination (Admin+)',
+    description: 'Use ?includeDeleted=true to include soft deleted users'
+  })
   @ApiResponse({ status: 200, description: 'Users retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
@@ -96,12 +99,51 @@ export class UsersController {
   @MinRole(Role.ADMIN)
   @UseGuards(CanModifyUserGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete user by ID (Admin+ - Cannot delete higher roles)' })
-  @ApiResponse({ status: 204, description: 'User deleted successfully' })
+  @ApiOperation({ summary: 'Soft delete user by ID (Admin+ - Cannot delete higher roles)' })
+  @ApiResponse({ status: 204, description: 'User soft deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Cannot delete users with equal or higher roles' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async remove(@Param('id') id: string) {
     await this._usersService.remove(id);
+  }
+
+  @Patch(':id/restore')
+  @Version('1')
+  @MinRole(Role.ADMIN)
+  @ApiOperation({ summary: 'Restore a soft deleted user (Admin+)' })
+  @ApiResponse({ status: 200, description: 'User restored successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 404, description: 'User not found or not deleted' })
+  async restore(@Param('id') id: string) {
+    const user = await this._usersService.restore(id);
+    const { password, refreshToken, ...result } = user;
+    return ResponseUtil.success(result, 'User restored successfully');
+  }
+
+  @Delete(':id/permanent')
+  @Version('1')
+  @MinRole(Role.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Permanently delete user (Hard delete - SUPER_ADMIN only)' })
+  @ApiResponse({ status: 204, description: 'User permanently deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - SUPER_ADMIN role required' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async hardDelete(@Param('id') id: string) {
+    await this._usersService.hardDelete(id);
+  }
+
+  @Get('deleted/list')
+  @Version('1')
+  @MinRole(Role.ADMIN)
+  @ApiOperation({ summary: 'Get all soft deleted users (Admin+)' })
+  @ApiResponse({ status: 200, description: 'Deleted users retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  async findDeleted(@Query() pagination: PaginationDto) {
+    const { data, total } = await this._usersService.findDeleted(pagination);
+    return ResponseUtil.paginated(data, pagination.page || 1, pagination.limit || 10, total);
   }
 }
