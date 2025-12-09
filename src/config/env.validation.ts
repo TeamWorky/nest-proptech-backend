@@ -21,6 +21,11 @@ export const envValidationSchema = Joi.object({
   // Redis
   REDIS_HOST: Joi.string().default('localhost'),
   REDIS_PORT: Joi.number().default(6379),
+  
+  // Cache configuration
+  CACHE_TTL_USER: Joi.number().default(300), // 5 minutes
+  CACHE_TTL_USER_LIST: Joi.number().default(60), // 1 minute
+  CACHE_TTL_DEFAULT: Joi.number().default(300), // 5 minutes default
 
   // JWT Secrets - Critical for security
   JWT_SECRET: Joi.string()

@@ -9,6 +9,27 @@ import { AlreadyExistsException, NotFoundException } from '../common/exceptions/
 import { Role, RoleHierarchy } from '../common/enums/role.enum';
 import { SoftDeleteRepositoryHelper } from '../common/repositories/base.repository';
 import { LoggerService } from '../logger/logger.service';
+import { RedisCacheService } from '../redis/redis-cache.service';
+
+/**
+ * Cache TTL constants (in seconds)
+ */
+const CACHE_TTL = {
+  USER: 300, // 5 minutes for single user
+  USER_LIST: 60, // 1 minute for user lists (more dynamic)
+  USER_BY_EMAIL: 300, // 5 minutes for user by email
+};
+
+/**
+ * Cache key patterns
+ */
+const CACHE_KEYS = {
+  user: (id: string) => `user:${id}`,
+  userByEmail: (email: string) => `user:email:${email}`,
+  userList: (page: number, limit: number, includeDeleted: boolean) =>
+    `users:list:${page}:${limit}:${includeDeleted}`,
+  userListPattern: () => 'users:list:*',
+};
 
 @Injectable()
 export class UsersService {
@@ -16,6 +37,7 @@ export class UsersService {
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
     private readonly logger: LoggerService,
+    private readonly cache: RedisCacheService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -41,52 +63,106 @@ export class UsersService {
         existingUser,
       );
       Object.assign(restoredUser, createUserDto);
-      return await this._userRepository.save(restoredUser);
+      const savedUser = await this._userRepository.save(restoredUser);
+
+      // Invalidate cache
+      await this.invalidateUserCache(savedUser.id, savedUser.email);
+
+      return savedUser;
     }
 
     const user = this._userRepository.create(createUserDto);
-    return await this._userRepository.save(user);
+    const savedUser = await this._userRepository.save(user);
+
+    // Invalidate user list cache (new user added)
+    await this.cache.invalidatePattern(CACHE_KEYS.userListPattern());
+
+    return savedUser;
   }
 
   async findAll(pagination: PaginationDto): Promise<{ data: User[]; total: number }> {
     const { page = 1, limit = 10, includeDeleted = false } = pagination;
+    const cacheKey = CACHE_KEYS.userList(page, limit, includeDeleted);
 
-    const [data, total] = await SoftDeleteRepositoryHelper.findAll(
-      this._userRepository,
-      {
-        skip: (page - 1) * limit,
-        take: limit,
-        order: { createdAt: 'DESC' },
-        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
-        includeDeleted,
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const [data, total] = await SoftDeleteRepositoryHelper.findAll(
+          this._userRepository,
+          {
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { createdAt: 'DESC' },
+            select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
+            includeDeleted,
+          },
+        );
+
+        return { data, total };
       },
+      CACHE_TTL.USER_LIST,
     );
-
-    return { data, total };
   }
 
   async findOne(id: string, includeDeleted = false): Promise<User> {
-    const user = await SoftDeleteRepositoryHelper.findOneById(
-      this._userRepository,
-      id,
-      {
-        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
-        includeDeleted,
-      },
-    );
+    // Don't cache when including deleted (different data)
+    if (includeDeleted) {
+      const foundUser = await SoftDeleteRepositoryHelper.findOneById(
+        this._userRepository,
+        id,
+        {
+          select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
+          includeDeleted,
+        },
+      );
 
-    if (!user) {
-      throw new NotFoundException('User');
+      if (!foundUser) {
+        throw new NotFoundException('User');
+      }
+
+      return foundUser;
     }
+
+    // Cache for normal queries (exclude deleted)
+    const cacheKey = CACHE_KEYS.user(id);
+
+    const user = await this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        const foundUser = await SoftDeleteRepositoryHelper.findOneById(
+          this._userRepository,
+          id,
+          {
+            select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
+            includeDeleted: false,
+          },
+        );
+
+        if (!foundUser) {
+          throw new NotFoundException('User');
+        }
+
+        return foundUser;
+      },
+      CACHE_TTL.USER,
+    );
 
     return user;
   }
 
   async findByEmail(email: string, includeDeleted = false): Promise<User | null> {
-    return await SoftDeleteRepositoryHelper.findOneBy(
-      this._userRepository,
-      { email },
-      { includeDeleted },
+    const cacheKey = CACHE_KEYS.userByEmail(email);
+
+    return this.cache.getOrSet(
+      cacheKey,
+      async () => {
+        return await SoftDeleteRepositoryHelper.findOneBy(
+          this._userRepository,
+          { email },
+          { includeDeleted },
+        );
+      },
+      CACHE_TTL.USER_BY_EMAIL,
     );
   }
 
@@ -110,12 +186,21 @@ export class UsersService {
     }
 
     Object.assign(user, updateUserDto);
-    return await this._userRepository.save(user);
+    const updatedUser = await this._userRepository.save(user);
+
+    // Invalidate cache
+    await this.invalidateUserCache(updatedUser.id, updatedUser.email);
+
+    return updatedUser;
   }
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
     await SoftDeleteRepositoryHelper.softDeleteEntity(this._userRepository, user);
+
+    // Invalidate cache
+    await this.invalidateUserCache(user.id, user.email);
+
     this.logger.log(`User soft deleted: ${id}`, UsersService.name, { userId: id });
   }
 
@@ -134,6 +219,9 @@ export class UsersService {
       user,
     );
 
+    // Invalidate cache
+    await this.invalidateUserCache(restoredUser.id, restoredUser.email);
+
     this.logger.log(`User restored: ${id}`, UsersService.name, { userId: id });
 
     return restoredUser;
@@ -144,6 +232,10 @@ export class UsersService {
    */
   async hardDelete(id: string): Promise<void> {
     const user = await this.findOne(id, true);
+    
+    // Invalidate cache before deletion
+    await this.invalidateUserCache(user.id, user.email);
+    
     await SoftDeleteRepositoryHelper.hardDeleteEntity(this._userRepository, user);
     this.logger.warn(`User permanently deleted: ${id}`, UsersService.name, { userId: id });
   }
@@ -173,5 +265,19 @@ export class UsersService {
     await this._userRepository.update(userId, { 
       refreshToken: refreshToken ?? undefined 
     });
+
+    // Invalidate user cache when refresh token changes
+    await this.cache.invalidate(CACHE_KEYS.user(userId));
+  }
+
+  /**
+   * Invalidate all cache entries for a user
+   */
+  private async invalidateUserCache(userId: string, email: string): Promise<void> {
+    await Promise.all([
+      this.cache.invalidate(CACHE_KEYS.user(userId)),
+      this.cache.invalidate(CACHE_KEYS.userByEmail(email)),
+      this.cache.invalidatePattern(CACHE_KEYS.userListPattern()),
+    ]);
   }
 }
