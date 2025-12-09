@@ -1,15 +1,19 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import helmet from 'helmet';
 import compression = require('compression');
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
+import { LoggerService } from './logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  const loggerService = app.get(LoggerService);
 
   app.use(
     helmet({
@@ -100,12 +104,20 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = configService.get<number>('PORT') || 3000;
-  const logger = new Logger('Bootstrap');
 
   await app.listen(port);
 
-  logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`API Documentation available at: http://localhost:${port}/api-docs`);
-  logger.log(`Health Check available at: http://localhost:${port}/api/health`);
+  loggerService.log(
+    `Application is running on: http://localhost:${port}`,
+    'Bootstrap',
+  );
+  loggerService.log(
+    `API Documentation available at: http://localhost:${port}/api-docs`,
+    'Bootstrap',
+  );
+  loggerService.log(
+    `Health Check available at: http://localhost:${port}/api/health`,
+    'Bootstrap',
+  );
 }
 bootstrap();

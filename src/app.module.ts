@@ -10,18 +10,27 @@ import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { LoggerModule } from './logger/logger.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
 import { RequestIdMiddleware } from './middlewares/request-id.middleware';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        abortEarly: false, // Show all validation errors, not just the first one
+        allowUnknown: true, // Allow additional variables
+        stripUnknown: true, // Remove unknown variables
+      },
     }),
+    LoggerModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
