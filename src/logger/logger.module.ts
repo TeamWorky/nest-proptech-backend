@@ -7,6 +7,8 @@ import { Log } from './entities/log.entity';
 import { DatabaseTransport } from './transports/database.transport';
 import { createWinstonConfig } from './winston.config';
 import { LoggerService } from './logger.service';
+import { LogsService } from './logs.service';
+import { LogsController } from './logs.controller';
 import { Repository } from 'typeorm';
 
 @Global()
@@ -32,7 +34,8 @@ import { Repository } from 'typeorm';
       },
     }),
   ],
-  providers: [LoggerService],
+  controllers: [LogsController],
+  providers: [LoggerService, LogsService],
   exports: [LoggerService, WinstonModule],
 })
 export class LoggerModule {}
