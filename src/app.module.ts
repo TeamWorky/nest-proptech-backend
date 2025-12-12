@@ -11,6 +11,8 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LoggerModule } from './logger/logger.module';
+import { QueueModule } from './queue/queue.module';
+import { EmailModule } from './email/email.module';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
@@ -53,6 +55,8 @@ import { envValidationSchema } from './config/env.validation';
       inject: [ConfigService],
     }),
     RedisModule,
+    QueueModule,
+    EmailModule,
     HealthModule,
     UsersModule,
     AuthModule,

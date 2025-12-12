@@ -65,6 +65,18 @@ export const envValidationSchema = Joi.object({
   LOG_BATCH_SIZE: Joi.number().default(10),
   LOG_BATCH_TIMEOUT: Joi.number().default(5000),
   LOG_RETENTION_DAYS: Joi.number().default(30),
+
+  // Email/SMTP configuration
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().default(587),
+  SMTP_USER: Joi.string().optional(),
+  SMTP_PASSWORD: Joi.string().optional(),
+  SMTP_SECURE: Joi.boolean().default(false),
+  SMTP_FROM: Joi.string().optional(),
+  SMTP_FROM_NAME: Joi.string().default('NestJS App'),
+  
+  // Application URL (for email links)
+  APP_URL: Joi.string().default('http://localhost:3000'),
 }).options({
   allowUnknown: true, // Allow additional variables not in schema
   stripUnknown: true, // Remove unknown variables
