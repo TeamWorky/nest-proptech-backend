@@ -105,7 +105,7 @@ describe('AuthService', () => {
       mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
-      mockedBcrypt.hash.mockResolvedValue('hashed-refresh-token' as never);
+      mockedBcrypt.hash.mockResolvedValue('hashed-refresh-token');
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act (Ejecutar)
@@ -165,7 +165,7 @@ describe('AuthService', () => {
       mockJwtService.signAsync
         .mockResolvedValueOnce('access-token')
         .mockResolvedValueOnce('refresh-token');
-      mockedBcrypt.hash.mockResolvedValue('hashed-refresh-token' as never);
+      mockedBcrypt.hash.mockResolvedValue('hashed-refresh-token');
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
 
       // Act
@@ -262,7 +262,7 @@ describe('AuthService', () => {
       });
 
       mockUsersService.findOne.mockResolvedValue(mockUser);
-      mockedBcrypt.compare.mockResolvedValue(true as never);
+      mockedBcrypt.compare.mockResolvedValue(true);
       mockJwtService.signAsync
         .mockResolvedValueOnce('new-access-token')
         .mockResolvedValueOnce('new-refresh-token');
@@ -322,7 +322,7 @@ describe('AuthService', () => {
       });
 
       mockUsersService.findOne.mockResolvedValue(mockUser);
-      mockedBcrypt.compare.mockResolvedValue(false as never);
+      mockedBcrypt.compare.mockResolvedValue(false);
 
       // Act & Assert
       await expect(service.refreshTokens(userId, refreshToken)).rejects.toThrow(

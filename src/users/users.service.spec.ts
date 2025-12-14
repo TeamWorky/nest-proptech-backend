@@ -19,6 +19,16 @@ describe('UsersService', () => {
   let cache: jest.Mocked<RedisCacheService>;
   let logger: jest.Mocked<LoggerService>;
 
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    withDeleted: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getManyAndCount: jest.fn(),
+  };
+
   const mockRepository = {
     create: jest.fn(),
     save: jest.fn(),
@@ -29,6 +39,7 @@ describe('UsersService', () => {
     softRemove: jest.fn(),
     remove: jest.fn(),
     recover: jest.fn(),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockCache = {
@@ -532,7 +543,7 @@ describe('UsersService', () => {
         createMockUser({ id: '2', deletedAt: new Date() }),
       ];
 
-      (SoftDeleteRepositoryHelper.findDeleted as jest.Mock).mockResolvedValue(deletedUsers);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([deletedUsers, 2]);
 
       // Act
       const result = await service.findDeleted(pagination);
@@ -540,16 +551,20 @@ describe('UsersService', () => {
       // Assert
       expect(result.data).toEqual(deletedUsers);
       expect(result.total).toBe(2);
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('user');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('user.deletedAt IS NOT NULL');
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
     });
 
     it('should handle pagination for deleted users', async () => {
       // Arrange
       const pagination = { page: 2, limit: 5 };
-      const allDeleted = Array.from({ length: 10 }, (_, i) =>
-        createMockUser({ id: `${i}`, deletedAt: new Date() }),
+      const paginatedDeleted = Array.from({ length: 5 }, (_, i) =>
+        createMockUser({ id: `${i + 5}`, deletedAt: new Date() }),
       );
 
-      (SoftDeleteRepositoryHelper.findDeleted as jest.Mock).mockResolvedValue(allDeleted);
+      mockQueryBuilder.getManyAndCount.mockResolvedValue([paginatedDeleted, 10]);
 
       // Act
       const result = await service.findDeleted(pagination);
@@ -557,6 +572,8 @@ describe('UsersService', () => {
       // Assert
       expect(result.data.length).toBe(5);
       expect(result.total).toBe(10);
+      expect(mockQueryBuilder.skip).toHaveBeenCalledWith(5); // (page - 1) * limit
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(5);
     });
   });
 });
