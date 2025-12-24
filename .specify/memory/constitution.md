@@ -1,50 +1,104 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# NestJS Backend Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Modular Architecture
+Cada feature debe implementarse como un módulo NestJS independiente y autocontenido. Los módulos deben:
+- Ser independientemente testeables
+- Tener responsabilidades claras y bien definidas
+- Seguir la estructura estándar: controller, service, module, dto, entities
+- Usar Dependency Injection para desacoplamiento
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Test-First Development (NON-NEGOTIABLE)
+TDD es obligatorio para módulos críticos:
+- Tests escritos → Usuario aprueba → Tests fallan → Implementar → Tests pasan
+- Ciclo Red-Green-Refactor estrictamente aplicado
+- Cobertura mínima: 70% global, 80-100% para módulos críticos (auth, users, etc.)
+- Tests unitarios con Jest, mocks para dependencias externas
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. API-First Design
+Todas las features deben:
+- Definir contratos API (OpenAPI/Swagger) antes de implementar
+- Usar DTOs con validación (class-validator)
+- Seguir convenciones RESTful
+- Documentar endpoints en Scalar UI
+- Versionar APIs cuando sea necesario (v1, v2, etc.)
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Security by Default
+- Autenticación JWT obligatoria para endpoints protegidos
+- Validación de entrada con class-validator
+- Rate limiting (100 req/min por defecto)
+- Headers de seguridad con Helmet
+- Hash de contraseñas con bcrypt
+- Control de acceso basado en roles (SUPER_ADMIN, ADMIN, USER, GUEST)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Observability & Logging
+- Logging estructurado con Winston
+- Request ID tracking para trazabilidad
+- Health checks para monitoreo
+- Logs almacenados en PostgreSQL para consulta
+- Niveles de log apropiados (error, warn, info, debug, verbose)
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+### VI. Simplicity (YAGNI)
+- Start simple, agregar complejidad solo cuando sea necesario
+- Evitar sobre-ingeniería
+- Usar patrones estándar de NestJS antes de crear soluciones custom
+- Preferir soluciones probadas sobre experimentales
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## Additional Constraints
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### Technology Stack Requirements
+- **Backend**: NestJS 11.x, TypeScript 5.7.x, Node.js 24.x
+- **Database**: PostgreSQL con TypeORM
+- **Cache**: Redis (ioredis)
+- **Testing**: Jest con ts-jest
+- **Documentation**: Swagger/OpenAPI con Scalar UI
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### Code Quality Standards
+- ESLint + Prettier para formateo consistente
+- TypeScript strict mode habilitado
+- Todas las dependencias deben tener tipos (@types/*)
+- No usar `any` sin justificación explícita
+
+### Database Standards
+- Migraciones TypeORM para todos los cambios de esquema
+- Soft delete para entidades principales (users, etc.)
+- UUIDs como claves primarias
+- Timestamps automáticos (createdAt, updatedAt, deletedAt)
+
+### API Standards
+- Respuestas estandarizadas con `ResponseUtil`
+- Paginación para listados (PaginationDto)
+- Manejo de errores con excepciones personalizadas
+- CORS configurado apropiadamente
+
+## Development Workflow
+
+### Feature Development Process
+1. **Especificación**: Crear `spec.md` con `/speckit.specify`
+2. **Planificación**: Crear `plan.md` con `/speckit.plan`
+3. **Tareas**: Desglosar en `tasks.md` con `/speckit.tasks`
+4. **Implementación**: Seguir tareas, escribir tests primero
+5. **Validación**: Ejecutar tests, verificar cobertura, revisar código
+
+### Code Review Requirements
+- Todos los PRs requieren al menos una aprobación
+- Tests deben pasar y mantener/mejorar cobertura
+- Linter debe pasar sin errores
+- Documentación actualizada si es necesario
+
+### Testing Gates
+- Tests unitarios obligatorios para servicios
+- Cobertura mínima verificada en CI/CD
+- Tests deben ser independientes y rápidos
+- Mocks para dependencias externas (DB, Redis, servicios externos)
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+La constitución supera todas las demás prácticas. Las excepciones deben:
+- Ser documentadas con justificación
+- Requerir aprobación del equipo
+- Incluir plan de migración si aplica
+- Ser revisadas periódicamente
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-12-14 | **Last Amended**: 2025-12-14

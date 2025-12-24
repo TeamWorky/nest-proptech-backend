@@ -17,15 +17,15 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5.7.3, Node.js 24.11.1  
+**Primary Dependencies**: NestJS 11.0.1, TypeORM 0.3.28, PostgreSQL, Redis  
+**Storage**: PostgreSQL (TypeORM), Redis (caché y colas)  
+**Testing**: Jest 30.0.0, ts-jest 29.2.5, Supertest 7.0.0  
+**Target Platform**: Linux server (Node.js runtime)  
+**Project Type**: Backend API (RESTful)  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, <200ms p95 response time or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, rate limiting 100 req/min, JWT token expiration or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, concurrent connections, data volume or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
@@ -56,39 +56,24 @@ specs/[###-feature]/
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+├── [feature-name]/              # Nuevo módulo de feature
+│   ├── dto/                     # DTOs (create, update)
+│   ├── entities/                # Entidades TypeORM
+│   ├── [feature-name].controller.ts
+│   ├── [feature-name].service.ts
+│   ├── [feature-name].service.spec.ts  # Tests unitarios
+│   └── [feature-name].module.ts
+│
+├── common/                       # Componentes compartidos existentes
+│   ├── decorators/
+│   ├── dto/
+│   ├── entities/
+│   ├── enums/
+│   ├── exceptions/
+│   └── validators/
+│
+└── [otros módulos existentes]    # auth, users, email, logger, etc.
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real

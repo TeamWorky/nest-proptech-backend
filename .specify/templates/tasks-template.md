@@ -20,10 +20,15 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+**NestJS Backend Structure:**
+- Source code: `src/[module-name]/`
+- Tests: `src/[module-name]/[file].spec.ts` (co-located with source)
+- DTOs: `src/[module-name]/dto/`
+- Entities: `src/[module-name]/entities/`
+- Controllers: `src/[module-name]/[module].controller.ts`
+- Services: `src/[module-name]/[module].service.ts`
+- Modules: `src/[module-name]/[module].module.ts`
+- Common: `src/common/` (decorators, dto, entities, enums, exceptions, validators)
 
 <!-- 
   ============================================================================
@@ -60,14 +65,16 @@ description: "Task list template for feature implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
+**Note**: Para este proyecto NestJS, la mayoría de la infraestructura ya existe. Solo incluir tareas si se necesita algo nuevo.
+
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 [P] Create database migration for new tables (if needed)
+- [ ] T005 [P] Setup new authentication/authorization guards (if needed)
+- [ ] T006 [P] Create base entities that all stories depend on (if needed)
+- [ ] T007 [P] Configure new error handling or logging (if needed)
+- [ ] T008 [P] Setup new environment variables (if needed)
+- [ ] T009 [P] Create shared DTOs or utilities in src/common/ (if needed)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -83,17 +90,20 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Unit tests for [Service] in src/[module]/[module].service.spec.ts
+- [ ] T011 [P] [US1] E2E tests for [endpoint] in test/[module].e2e-spec.ts
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Create [Entity] entity in src/[module]/entities/[entity].entity.ts (extends BaseEntity)
+- [ ] T013 [P] [US1] Create DTOs in src/[module]/dto/ (create-[entity].dto.ts, update-[entity].dto.ts)
+- [ ] T014 [US1] Implement [Module]Service in src/[module]/[module].service.ts (depends on T012, T013)
+- [ ] T015 [US1] Implement [Module]Controller in src/[module]/[module].controller.ts
+- [ ] T016 [US1] Create [Module]Module in src/[module]/[module].module.ts
+- [ ] T017 [US1] Register module in src/app.module.ts
+- [ ] T018 [US1] Add validation decorators to DTOs (class-validator)
+- [ ] T019 [US1] Add API documentation decorators (@ApiProperty, @ApiTags)
+- [ ] T020 [US1] Add error handling and logging
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -107,15 +117,17 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T021 [P] [US2] Unit tests for [Service] in src/[module]/[module].service.spec.ts
+- [ ] T022 [P] [US2] E2E tests for [endpoint] in test/[module].e2e-spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T023 [P] [US2] Create [Entity] entity in src/[module]/entities/[entity].entity.ts
+- [ ] T024 [P] [US2] Create DTOs in src/[module]/dto/
+- [ ] T025 [US2] Implement [Module]Service in src/[module]/[module].service.ts
+- [ ] T026 [US2] Implement [Module]Controller in src/[module]/[module].controller.ts
+- [ ] T027 [US2] Create [Module]Module and register in app.module.ts
+- [ ] T028 [US2] Integrate with User Story 1 components (if needed)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -129,14 +141,16 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T029 [P] [US3] Unit tests for [Service] in src/[module]/[module].service.spec.ts
+- [ ] T030 [P] [US3] E2E tests for [endpoint] in test/[module].e2e-spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T031 [P] [US3] Create [Entity] entity in src/[module]/entities/[entity].entity.ts
+- [ ] T032 [P] [US3] Create DTOs in src/[module]/dto/
+- [ ] T033 [US3] Implement [Module]Service in src/[module]/[module].service.ts
+- [ ] T034 [US3] Implement [Module]Controller in src/[module]/[module].controller.ts
+- [ ] T035 [US3] Create [Module]Module and register in app.module.ts
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -150,12 +164,15 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
-- [ ] TXXX Run quickstart.md validation
+- [ ] TXXX [P] Update API documentation in Scalar (Swagger decorators)
+- [ ] TXXX [P] Code cleanup and refactoring
+- [ ] TXXX [P] Performance optimization (Redis caching, query optimization)
+- [ ] TXXX [P] Additional unit tests to improve coverage
+- [ ] TXXX [P] Security hardening (guards, validators, rate limiting)
+- [ ] TXXX [P] Update README.md with new feature documentation
+- [ ] TXXX [P] Run quickstart.md validation
+- [ ] TXXX [P] Verify all tests pass: `npm test`
+- [ ] TXXX [P] Check coverage: `npm run test:cov`
 
 ---
 
