@@ -16,6 +16,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
+    "test:cov:html": "jest --coverage && (open coverage/index.html || xdg-open coverage/index.html || start coverage/index.html || echo 'Open coverage/index.html in your browser')",
+    "test:cov:summary": "jest --coverage --coverageReporters=text-summary",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "typeorm-ts-node-commonjs",
@@ -98,9 +100,38 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.spec.ts",
+      "!**/*.interface.ts",
+      "!**/*.dto.ts",
+      "!**/*.entity.ts",
+      "!**/*.enum.ts",
+      "!**/main.ts",
+      "!**/index.ts",
+      "!**/*.module.ts",
+      "!**/node_modules/**"
     ],
     "coverageDirectory": "../coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      },
+      "./src/auth/auth.service.ts": {
+        "branches": 80,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    },
     "testEnvironment": "node"
   }
 }

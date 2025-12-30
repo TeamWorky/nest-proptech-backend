@@ -469,6 +469,72 @@ Todas las respuestas siguen un formato estándar:
 
 ---
 
+## 🧪 Testing
+
+El proyecto incluye una suite completa de tests unitarios que garantizan la calidad y confiabilidad del código.
+
+### 📊 Estadísticas de Tests
+
+- **Total de tests**: 153 tests pasando ✅
+- **Archivos de test**: 9 archivos
+- **Cobertura**: Alta cobertura en módulos críticos
+
+### 🎯 Módulos con Tests
+
+#### Módulos Principales
+- **AuthService**: 11 tests - Autenticación, registro, login, logout, refresh tokens
+- **UsersService**: 24 tests - CRUD completo, soft delete, restore, permisos de roles
+- **LogsService**: 15 tests - Filtrado, búsqueda, estadísticas
+
+#### Utilidades
+- **CryptoUtil**: 12 tests - Hash, tokens, UUIDs
+- **DateUtil**: 15 tests - Manipulación de fechas
+- **StringUtil**: 18 tests - Slugify, truncate, validación de emails
+- **ResponseUtil**: 9 tests - Formato de respuestas API
+
+#### Validadores y Servicios
+- **PasswordStrengthValidator**: 12 tests - Validación de contraseñas
+- **RedisCacheService**: 18 tests - Caché, invalidación, TTL
+
+### 🚀 Comandos de Testing
+
+```bash
+# Ejecutar todos los tests
+npm test
+
+# Ejecutar tests en modo watch
+npm run test:watch
+
+# Ejecutar tests con cobertura
+npm run test:cov
+
+# Ver reporte HTML de cobertura
+npm run test:cov:html
+
+# Ver resumen de cobertura
+npm run test:cov:summary
+```
+
+### 📈 Cobertura de Código
+
+| Módulo | Statements | Branches | Functions | Lines |
+|--------|-----------|----------|-----------|-------|
+| AuthService | 100% | 83.33% | 100% | 100% |
+| Utils | 100% | 100% | 100% | 100% |
+| RedisCacheService | 100% | 86.66% | 100% | 100% |
+| UsersService | Alta | Alta | Alta | Alta |
+| LogsService | Alta | Alta | Alta | Alta |
+
+### 📝 Información en Scalar
+
+La documentación de Scalar (`/api-docs`) incluye información detallada sobre los tests, incluyendo:
+- Estadísticas de cobertura
+- Módulos testeados
+- Comandos para ejecutar tests
+- Métricas de calidad
+
+---
+
 ## 🧰 Utilidades
 
 ### 📅 Utilidades de Fecha

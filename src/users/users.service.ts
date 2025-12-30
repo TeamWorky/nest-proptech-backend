@@ -246,19 +246,29 @@ export class UsersService {
   async findDeleted(pagination: PaginationDto): Promise<{ data: User[]; total: number }> {
     const { page = 1, limit = 10 } = pagination;
 
-    // Get all deleted users first to get accurate count
-    const allDeleted = await SoftDeleteRepositoryHelper.findDeleted(
-      this._userRepository,
-      {
-        order: { deletedAt: 'DESC' },
-        select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt', 'updatedAt', 'deletedAt'],
-      },
-    );
+    // Use query builder for efficient pagination at database level
+    const queryBuilder = this._userRepository
+      .createQueryBuilder('user')
+      .where('user.deletedAt IS NOT NULL')
+      .withDeleted()
+      .select([
+        'user.id',
+        'user.email',
+        'user.firstName',
+        'user.lastName',
+        'user.role',
+        'user.isActive',
+        'user.createdAt',
+        'user.updatedAt',
+        'user.deletedAt',
+      ])
+      .orderBy('user.deletedAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    const total = allDeleted.length;
-    const paginatedDeleted = allDeleted.slice((page - 1) * limit, page * limit);
+    const [data, total] = await queryBuilder.getManyAndCount();
 
-    return { data: paginatedDeleted, total };
+    return { data, total };
   }
 
   async updateRefreshToken(userId: string, refreshToken: string | null): Promise<void> {
